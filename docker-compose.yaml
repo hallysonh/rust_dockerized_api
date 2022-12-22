@@ -1,0 +1,42 @@
+version: '3'
+services:
+  rust_dockerized_api_dev:
+    container_name: rust_dockerized_api_dev
+    build:
+      context: .
+      target: dev
+    volumes:
+      - "./src/:/usr/src/app/src"
+    environment:
+      - DATASOURCE_URL=jdbc:postgresql:postgres:S3cr3t//postgres_db:5432/rust_api_db
+    ports:
+      - 3030:3030
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost:3030
+    networks:
+      - back-tier          
+  postgres_db:
+    container_name: postgres_db
+    image: 'postgres:13-alpine'
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=S3cr3t
+    volumes:
+      - "db-data:/var/lib/postgresql/data"
+    healthcheck:
+      test: exit 0
+    networks:
+      - back-tier
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+volumes:
+  db-data:
+
+networks:
+  back-tier:
